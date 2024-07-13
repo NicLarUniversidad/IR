@@ -1,7 +1,10 @@
+from MetadataFilesManager import MetadataFilesManager
 from QueryManager import QueryManager
 from LazyBM import LazyBM
 
-searcher = LazyBM()
+metadataManager = MetadataFilesManager()
+termsDict = metadataManager.getTermsMetadata()
+searcher = LazyBM(termsDict)
 queryManager = QueryManager()
 topK = 5
 continues = 1

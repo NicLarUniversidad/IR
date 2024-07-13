@@ -8,12 +8,13 @@ from TopK import TopK
 
 class LazyBM(object):
 
-    def __init__(self):
+    def __init__(self, termDict=None):
         self.postingLists = dict()
         self.queryManager = QueryManager()
         self.postingListManager = PostingListVectorialManager()
         self.infinite = -1
         self.k = 5
+        self.termDict = termDict
 
     # Se implementa el pseudo-código de LazyBM en el siguiente método
     def processQuery(self, queryTerms):
@@ -21,7 +22,7 @@ class LazyBM(object):
         topK = TopK(self.k)
         # Al instanciar un blockService, se buscan los primeros bloques y hay un ordenamiento (ver constructor)
         # Get candidate doc id list
-        blockService = BlockService(queryTerms)
+        blockService = BlockService(queryTerms, self.termDict)
         # Se obtienen los upper bounds acomulados según el orden calculado
         P = blockService.computePrefixSum()
         # Se separan en términos esenciales y opcionales según theta

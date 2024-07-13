@@ -4,12 +4,15 @@ from MetadataFilesManager import MetadataFilesManager
 
 class BlockService(object):
 
-    def __init__(self, queryTerms):
+    def __init__(self, queryTerms, termDict=None):
         # Se instancia el objecto blockManager que está encargado de leer el archivo
         self.blockManager = BlockMaxIndexManager()
         # Se obtiene la metadata que contiene el par <id-término>:<string del término>
-        metadataManager = MetadataFilesManager()
-        self.TermsDict = metadataManager.getTermsMetadata()
+        if termDict is None:
+            metadataManager = MetadataFilesManager()
+            self.TermsDict = metadataManager.getTermsMetadata()
+        else:
+            self.TermsDict = termDict
         # Se buscan en disco los primeros bloques de cada término
         self.block = self.getFirstBlock(queryTerms)
         # Se ordenan por cantidad de DOC-IDs
@@ -40,11 +43,14 @@ class BlockService(object):
         minDocId = self.pivotDocId
         founded = 0
         for term in tEss:
-            currentDocId = self.block[term].getNextDocId()
+            currentDocId = self.block[term].getCurrentDocId()
+            if currentDocId == self.pivotDocId:
+                self.block[term].next()
+                currentDocId = self.block[term].getCurrentDocId()
             if currentDocId == -1:
                 if self.block[term].hasNextBlock():
                     self.block[term] = self.blockManager.getNextBlock(term, self.block[term])
-                    currentDocId = self.block[term].getNextDocId()
+                    currentDocId = self.block[term].getCurrentDocId()
                     if currentDocId < minDocId:
                         minDocId = currentDocId
                         founded = 1

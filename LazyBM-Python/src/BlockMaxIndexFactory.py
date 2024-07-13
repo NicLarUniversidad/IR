@@ -174,14 +174,11 @@ class BlockMaxIndexFactory(object):
                     for j in range(blockSize):
                         if firstDocId + j < len(docIdList):
                             blockDocIds.append(docIdList[firstDocId + j])
-                            blockScores.append(scoreList[firstDocId + j])
-                        else:
-                            blockDocIds.append(-1)
-                            blockScores.append(0)
+                            blockScores.append(float(scoreList[firstDocId + j]))
 
                     while len(blockDocIds) < blockSize:
                         blockDocIds.append(infiniteValue)
-                        blockScores.append(0)
+                        blockScores.append(float(0))
 
                     maxDocId = max(blockDocIds)
                     maxFrequency = max(blockScores)

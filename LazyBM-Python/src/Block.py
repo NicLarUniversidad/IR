@@ -3,7 +3,7 @@ class Block(object):
     def __init__(self, record, blockSize, blockCount, blockNumber, docIdCount):
         self.record = record
         self.blockSize = blockSize
-        self.currentIdx = 0
+        self.currentIdx = 1
         self.blockCount = blockCount
         self.blockNumber = blockNumber
         self.docIdCount = docIdCount
@@ -15,24 +15,20 @@ class Block(object):
         return self.record[0]
 
     def getCurrentDocId(self):
-        return self.record[1 + self.currentIdx]
+        if self.currentIdx < self.blockSize:
+            return self.record[1 + self.currentIdx]
+        else:
+            return -1
 
     def getCurrentScore(self):
         return self.record[1 + self.blockSize + self.currentIdx]
 
     def next(self):
-        if self.currentIdx < self.blockSize:
-            self.currentIdx += 1
-            return 1
-        else:
-            return 0
+        self.currentIdx += 1
 
     def getNextDocId(self):
-        flag = self.next()
-        if flag == 1:
-            return self.getCurrentDocId()
-        else:
-            return -1
+        self.next()
+        return self.getCurrentDocId()
 
     def skipTo(self, pivoteDocId):
         hasNextDocId = 1
