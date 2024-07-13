@@ -5,3 +5,8 @@ LazyBM-Python/src/blockMaxIndexMetadata.dat
 LazyBM-Python/src/fileIndex.txt
 LazyBM-Python/src/fileLengths.txt
 LazyBM-Python/src/termIndex.txt
+
+.idea
+LazyBM-Python/src/.idea
+
+LazyBM-Python/src/__pycache__
