@@ -21,7 +21,12 @@ class Block(object):
             return -1
 
     def getCurrentScore(self):
-        return self.record[1 + self.blockSize + self.currentIdx]
+        idx = 1 + self.blockSize + self.currentIdx
+        if idx < len(self.record):
+            return self.record[idx]
+        else:
+            print(f"Se quiso acceder al índice {idx}, máximo {len(self.record)}")
+            return 0
 
     def next(self):
         self.currentIdx += 1
@@ -32,11 +37,14 @@ class Block(object):
 
     def skipTo(self, pivoteDocId):
         hasNextDocId = 1
+        skippedDocIds = 0
         while self.getMaxDocId() < pivoteDocId and hasNextDocId:
             hasNextDocId = self.next()
+            skippedDocIds += 1
             if not hasNextDocId:
                 # TODO: ¿recuperar siguiente bloque?
                 pass
+        return skippedDocIds
 
     def hasNextBlock(self):
         return self.blockCount > self.blockNumber

@@ -13,13 +13,12 @@ class LazyBM(object):
         self.queryManager = QueryManager()
         self.postingListManager = PostingListVectorialManager()
         self.infinite = -1
-        self.k = 5
         self.termDict = termDict
 
     # Se implementa el pseudo-código de LazyBM en el siguiente método
-    def processQuery(self, queryTerms):
+    def processQuery(self, queryTerms, k):
         # La clase top K representa un heap de tamaño K
-        topK = TopK(self.k)
+        topK = TopK(k)
         # Al instanciar un blockService, se buscan los primeros bloques y hay un ordenamiento (ver constructor)
         # Get candidate doc id list
         blockService = BlockService(queryTerms, self.termDict)
@@ -74,13 +73,16 @@ class LazyBM(object):
                 if score > topK.getTheta():
                     topK.insert(pivotDocId, score)
 
-        return topK
+            else:
+                blockService.docIdSkippedWithUb += 1
+
+        return topK, blockService
 
     def search(self, query, topK):
         queryTerms = self.queryManager.parseQuery(query)
         if len(queryTerms) > 0:
-            ranking = self.processQuery(queryTerms)
-            return ranking
+            ranking, blockService = self.processQuery(queryTerms, topK)
+            return ranking, blockService
 
     def getPivot(self, block):
         pivot = self.infinite

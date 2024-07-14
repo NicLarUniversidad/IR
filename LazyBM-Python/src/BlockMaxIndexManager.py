@@ -95,18 +95,22 @@ class BlockMaxIndexManager(object):
         lastBlock = 0
         founded = 0
         record = []
+        skipped = -1
         while not founded and not lastBlock:
             blockNumber + 1
             blockMaxIndexFile.seek(offset)
             data = blockMaxIndexFile.read(recordSize)
             record = recordUnpack(data)
-            founded = record[1] > pivotDocId
+            founded = record[0] > pivotDocId
             lastBlock = blockNumber < blockCount
+            offset += recordSize
+            blockCount += 1
+            skipped += 1
         blockMaxIndexFile.close()
 
         if founded:
             block = Block(record, blockSize, blockCount, block.blockNumber + 1, docIdCount)
 
-        return block, founded
+        return block, founded, skipped
 
 

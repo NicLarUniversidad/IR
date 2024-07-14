@@ -5,6 +5,11 @@ from MetadataFilesManager import MetadataFilesManager
 class BlockService(object):
 
     def __init__(self, queryTerms, termDict=None):
+        self.blocksRead = 0
+        self.docIdRead = 0
+        self.docIdSkipped = 0
+        self.docIdSkippedWithUb = 0
+        self.blockSkipped = 0
         # Se instancia el objecto blockManager que está encargado de leer el archivo
         self.blockManager = BlockMaxIndexManager()
         # Se obtiene la metadata que contiene el par <id-término>:<string del término>
@@ -37,6 +42,7 @@ class BlockService(object):
         for term in queryTerms:
             if term in self.TermsDict:
                 termIdList.append(int(self.TermsDict[term]))
+                self.blocksRead += 1
         return self.blockManager.getFirstBlocks(termIdList)
 
     def nextDocWithinEssentialBlock(self, tEss):
@@ -49,11 +55,16 @@ class BlockService(object):
                 currentDocId = self.block[term].getCurrentDocId()
             if currentDocId == -1:
                 if self.block[term].hasNextBlock():
+                    self.blocksRead += 1
                     self.block[term] = self.blockManager.getNextBlock(term, self.block[term])
                     currentDocId = self.block[term].getCurrentDocId()
-                    if currentDocId < minDocId:
+                    if minDocId == self.pivotDocId:
                         minDocId = currentDocId
                         founded = 1
+                    else:
+                        if currentDocId < minDocId:
+                            minDocId = currentDocId
+                            founded = 1
             else:
                 if minDocId == self.pivotDocId:
                     minDocId = currentDocId
@@ -75,6 +86,7 @@ class BlockService(object):
         return P
 
     def getCurrentDocId(self, t):
+        self.blocksRead += 1
         return self.block[t].getCurrentDocId()
 
     def skipTo(self, t, pivotDocId):
@@ -84,9 +96,12 @@ class BlockService(object):
             # si el pivote está en el índice, debería estar en este bloque
             if self.block[t].getMaxDocId() <= pivotDocId:
                 # Se saltean los DOC-ID hasta un DOC-ID que sea igual o mayor al pivote
-                self.block[t].skipTo(pivotDocId)
+                self.docIdSkipped += self.block[t].skipTo(pivotDocId)
             else:
-                self.block[t], founded = self.blockManager.getBlockByDocId(t, pivotDocId, self.block[t])
+                self.blocksRead += 1
+                self.block[t], founded, skipped = self.blockManager.getBlockByDocId(t, pivotDocId, self.block[t])
+                self.docIdSkipped += self.block[t].skipTo(pivotDocId)
+                self.blockSkipped += skipped
                 # Si no encuentra el siguiente bloque, es porque el DOC-ID más grande del índice es menor que el
                 # DOC-ID pivote, por lo que el pivote no está en el índice
                 # Ni tampoco los siguientes DOC-ID pivotes. Por lo que ya no tendría sentido considerar el índice
