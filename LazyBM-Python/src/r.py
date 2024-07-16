@@ -20,9 +20,10 @@ for queryId in queries:
     for result in results:
         statistics = results[result][1]
         statistics["process_time"] = results[result][2]
-        newLine += f'"{result}":' + "{" + f"{statistics}"
-        newLine += "},"
+        newLine += f'"{result}": {statistics}'
+        newLine += ","
     newLine = newLine[:-1]
     newLine += "}\n"
+    newLine = newLine.replace("\'", "\"")
     file.write(newLine)
 file.close()
