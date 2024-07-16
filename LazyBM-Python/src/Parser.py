@@ -34,14 +34,13 @@ class Parser(object):
             formattedWord = re.sub(r'\W', '', formattedWord)
             if len(formattedWord) > self.minLength & len(formattedWord) < self.maxLength:
                 if formattedWord not in self.stopwords:
-                    termKey = ""
                     if formattedWord not in termIndexes:
                         termCount += 1
                         termIndexes[formattedWord] = termCount
-                        termIndexesInverse[str(termCount)] = formattedWord
-                        termKey += str(termCount)
+                        termIndexesInverse[termCount] = formattedWord
+                        termKey = termCount
                     else:
-                        termKey = str(termIndexes[formattedWord])
+                        termKey = termIndexes[formattedWord]
                     # Si ya está en la posting list, no se guarda de nuevo
                     if termKey not in textTerms.keys():
                         textTerms[termKey] = 1

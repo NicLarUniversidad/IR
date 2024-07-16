@@ -81,7 +81,8 @@ class BlockMaxIndexFactory(object):
             self.saveToDisk(vocabulary)
 
     def getPostingListsFromDisk(self, partNumber, termId, postingList):
-        if os.path.isfile(f"postingListsMetadata-part{partNumber}.dat") and os.path.isfile(f"postingLists-part{partNumber}.dat"):
+        if os.path.isfile(f"postingListsMetadata-part{partNumber}.dat") and os.path.isfile(
+                f"postingLists-part{partNumber}.dat"):
             # and os.path.getsize("postingListsMetadata-part{partNumber}.dat") > 0):
             metadataFile = open(f"postingListsMetadata-part{partNumber}.dat", 'rb')
             postingListFile = open(f"postingLists-part{partNumber}.dat", 'rb')
@@ -89,7 +90,7 @@ class BlockMaxIndexFactory(object):
             metadataLength = struct.calcsize(metadataFormat)
             metadataUnpack = struct.Struct(metadataFormat).unpack_from
             offset = metadataLength * (int(termId) - 1)
-            if offset < os.path.getsize(f"postingListsMetadata-part{partNumber}.dat") - metadataLength:
+            if offset <= os.path.getsize(f"postingListsMetadata-part{partNumber}.dat") - metadataLength:
                 metadataFile.seek(offset)
                 data = metadataFile.read(metadataLength)
                 metadataRecord = metadataUnpack(data)
@@ -106,7 +107,7 @@ class BlockMaxIndexFactory(object):
                     frequencies = []
                     for i in range(0, size):
                         docIds.append(record[1 + i])
-                    for i in range(size, size*2):
+                    for i in range(size, size * 2):
                         frequencies.append(record[1 + i])
                     postingList = self.addByFileId(postingList, termId, docIds, frequencies)
             metadataFile.close()
@@ -134,7 +135,7 @@ class BlockMaxIndexFactory(object):
             index += 1
         return postingListDict
 
-    def mergePostingLists(self, termIndex, N, averageLength, fileLengths):
+    def mergePostingLists(self, termIndex, N, averageLength, fileLengths, calculateScore=True):
         print("Merge de bloques")
         self.deleteFiles()
         blockMaxIndexFile = open('blockMaxIndex.dat', 'wb')
@@ -142,52 +143,72 @@ class BlockMaxIndexFactory(object):
         offset = 0
         infiniteValue = 0
         blockMaxMetadataRecordFormat = 'Q Q Q Q Q'  # term id, block size, block count, doc-id count, offset
-        bm25Calculator = Bm25Calculator(N)
+        bm25Calculator = None
+        if calculateScore:
+            bm25Calculator = Bm25Calculator(N)
         for termId in termIndex:
             termIdInt = int(termId)
             postingListDict = dict()
             for part in range(1, self.parts + 1):
                 postingListDict = self.getPostingListsFromDisk(part, termIdInt, postingListDict)
 
-            if termIdInt in postingListDict:
-                docIdList = []
-                scoreList = []
-                for tuple0 in postingListDict[termIdInt]:
-                    docId = tuple0[0]
-                    docIdList.append(docId)
+            #if termIdInt in postingListDict:
+            docIdList = []
+            scoreList = []
+            frequencyList = []
+            for tuple0 in postingListDict[termIdInt]:
+                docId = tuple0[0]
+                docIdList.append(docId)
+                if calculateScore:
                     score = bm25Calculator.calculateBij(tuple0[1], fileLengths[int(docId)], averageLength)
-                    scoreList.append(score)
+                else:
+                    score = tuple0[1]
+                scoreList.append(score)
+                frequencyList.append(tuple0[1])
 
-                # Armo índice BlockMax
-                postingListSize = len(docIdList)
-                blocksCount = int(math.sqrt(postingListSize))
-                blockSize = int(postingListSize / blocksCount)
-                if postingListSize / blocksCount > blockSize:
-                    blocksCount += 1
-                blockMaxRecord = struct.pack(blockMaxMetadataRecordFormat, int(termId), blockSize, blocksCount, postingListSize, offset)
-                blockMaxIndexMetadataFile.write(blockMaxRecord)
-                for i in range(blocksCount):
-                    firstDocId = i * blockSize
-                    blockDocIds = []
-                    blockScores = []
+            # Armo índice BlockMax
+            postingListSize = len(docIdList)
+            blocksCount = int(math.sqrt(postingListSize))
+            blockSize = int(postingListSize / blocksCount)
+            if postingListSize / blocksCount > blockSize:
+                blocksCount += 1
+            blockMaxRecord = struct.pack(blockMaxMetadataRecordFormat, int(termId), blockSize, blocksCount,
+                                         postingListSize, offset)
+            blockMaxIndexMetadataFile.write(blockMaxRecord)
+            for i in range(blocksCount):
+                firstDocId = i * blockSize
+                blockDocIds = []
+                blockScores = []
+                blockFrequencies = []
 
-                    for j in range(blockSize):
-                        if firstDocId + j < len(docIdList):
-                            blockDocIds.append(docIdList[firstDocId + j])
-                            blockScores.append(float(scoreList[firstDocId + j]))
+                for j in range(blockSize):
+                    if firstDocId + j < len(docIdList):
+                        blockDocIds.append(docIdList[firstDocId + j])
+                        blockScores.append(float(scoreList[firstDocId + j]))
+                        blockFrequencies.append(float(frequencyList[firstDocId + j]))
 
-                    while len(blockDocIds) < blockSize:
-                        blockDocIds.append(infiniteValue)
-                        blockScores.append(float(0))
+                while len(blockDocIds) < blockSize:
+                    blockDocIds.append(infiniteValue)
+                    blockScores.append(float(0))
+                    blockFrequencies.append(float(0))
 
-                    maxDocId = max(blockDocIds)
-                    maxFrequency = max(blockScores)
-
-                    blockMaxRecordFormat = "Id" + str(blockSize) + "I" + str(blockSize) + "d"  # Max Doc-id, Max Freq, doc-ids, frequencies
+                maxDocId = max(blockDocIds)
+                maxScore = max(blockScores)
+                maxFrequency = max(frequencyList)
+                if calculateScore:
+                    blockMaxRecordFormat = "Id" + str(blockSize) + "I" + str(
+                        blockSize) + "d"  # Max Doc-id, Max score, doc-ids, scores
                     blockMaxRecordSize = struct.calcsize(blockMaxRecordFormat)
-                    blockMaxRecord = struct.pack(blockMaxRecordFormat, maxDocId, float(maxFrequency), *blockDocIds, *blockScores)
-                    blockMaxIndexFile.write(blockMaxRecord)
-                    offset += blockMaxRecordSize
+                    blockMaxRecord = struct.pack(blockMaxRecordFormat, maxDocId, float(maxScore), *blockDocIds,
+                                                 *blockScores)
+                else:
+                    blockMaxRecordFormat = "II" + str(blockSize) + "I" + str(
+                        blockSize) + "I"  # Max Doc-id, Max Freq, doc-ids, frequencies
+                    blockMaxRecordSize = struct.calcsize(blockMaxRecordFormat)
+                    blockMaxRecord = struct.pack(blockMaxRecordFormat, maxDocId, int(maxFrequency), *blockDocIds,
+                                                 *blockFrequencies)
+                blockMaxIndexFile.write(blockMaxRecord)
+                offset += blockMaxRecordSize
 
         blockMaxIndexFile.close()
         blockMaxIndexMetadataFile.close()
@@ -204,6 +225,7 @@ class BlockMaxIndexFactory(object):
 
     def deleteParts(self, partsCount):
         for partNumber in range(1, partsCount + 1):
-            if os.path.isfile(f"postingListsMetadata-part{partNumber}.dat") and os.path.isfile(f"postingLists-part{partNumber}.dat"):
+            if os.path.isfile(f"postingListsMetadata-part{partNumber}.dat") and os.path.isfile(
+                    f"postingLists-part{partNumber}.dat"):
                 os.remove(f"postingLists-part{partNumber}.dat")
                 os.remove(f"postingListsMetadata-part{partNumber}.dat")

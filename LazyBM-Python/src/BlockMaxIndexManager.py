@@ -1,4 +1,7 @@
+import os
 import struct
+
+from termcolor import colored
 
 from Block import Block
 
@@ -15,7 +18,6 @@ class BlockMaxIndexManager(object):
             tId = int(termId)
             termBlock = self.getFirstBlock(tId)
             block[tId] = termBlock
-
         return block
 
     def getFirstBlock(self, termId):
@@ -64,21 +66,30 @@ class BlockMaxIndexManager(object):
         return termBlock
 
     def getBlockMaxIndexMetadata(self, termId):
-        blockMaxIndexMetadataFile = open('blockMaxIndexMetadata.dat', 'rb')
         blockMaxMetadataRecordFormat = 'Q Q Q Q Q'  # term id, block size, block count, doc-id count, offset
         blockMaxMetadataRecordSize = struct.calcsize(blockMaxMetadataRecordFormat)
         metadataUnpack = struct.Struct(blockMaxMetadataRecordFormat).unpack_from
         offset = (termId - 1) * blockMaxMetadataRecordSize
-        blockMaxIndexMetadataFile.seek(offset)
-        data = blockMaxIndexMetadataFile.read(blockMaxMetadataRecordSize)
-        blockMaxIndexMetadataFile.close()
-        return metadataUnpack(data)
+        if offset > os.path.getsize('blockMaxIndexMetadata.dat') - blockMaxMetadataRecordSize:
+            print(colored(f'Se intentó acceder al byte {offset}, pero el archivo tiene{os.path.getsize("blockMaxIndexMetadata.dat")} bytes', 'red'))
+            # Si el offset es más grande que el archivo, entocnes se está buscando un ID que no existe en el índice
+            return None
+        else:
+            blockMaxIndexMetadataFile = open('blockMaxIndexMetadata.dat', 'rb')
+            if offset > os.path.getsize('blockMaxIndexMetadata.dat'):
+                print(f"Term id {termId} ")
+                print(f"Block-size {blockMaxMetadataRecordSize} ")
+                print(f"File too shot: offset {offset}, file size {os.path.getsize('blockMaxIndexMetadata.dat')}")
+            blockMaxIndexMetadataFile.seek(offset)
+            data = blockMaxIndexMetadataFile.read(blockMaxMetadataRecordSize)
+            blockMaxIndexMetadataFile.close()
+            return metadataUnpack(data)
 
     def getBlockByDocId(self, termId, pivotDocId, block=None):
         if block is not None:
             blockNumber = block.blockNumber
         else:
-            blockNumber = 0
+            blockNumber = 1
         metadataRecord = self.getBlockMaxIndexMetadata(termId)
 
         blockSize = metadataRecord[1]
@@ -89,7 +100,7 @@ class BlockMaxIndexManager(object):
         recordFormat = f"Id{blockSize}I{blockSize}d"
         recordSize = struct.calcsize(recordFormat)
         recordUnpack = struct.Struct(recordFormat).unpack_from
-        offset = offset + blockNumber * recordSize
+        offset = offset + (blockNumber - 1) * recordSize
 
         blockMaxIndexFile = open('blockMaxIndex.dat', 'rb')
         lastBlock = 0
@@ -98,19 +109,46 @@ class BlockMaxIndexManager(object):
         skipped = -1
         while not founded and not lastBlock:
             blockNumber + 1
-            blockMaxIndexFile.seek(offset)
-            data = blockMaxIndexFile.read(recordSize)
-            record = recordUnpack(data)
-            founded = record[0] > pivotDocId
-            lastBlock = blockNumber < blockCount
-            offset += recordSize
-            blockCount += 1
-            skipped += 1
+            if offset <= os.path.getsize("blockMaxIndex.dat") - recordSize:
+                blockMaxIndexFile.seek(offset)
+                data = blockMaxIndexFile.read(recordSize)
+                record = recordUnpack(data)
+                founded = record[0] > pivotDocId
+                lastBlock = blockNumber < blockCount
+                offset += recordSize
+                skipped += 1
+            else:
+                print(f"Se quizo acceder al offset {offset} bytes en el archivo blockMaxIndex.dat")
+                lastBlock = True
+                skipped += 1
         blockMaxIndexFile.close()
 
         if founded:
             block = Block(record, blockSize, blockCount, block.blockNumber + 1, docIdCount)
 
         return block, founded, skipped
+
+    def getBlocksByDocId(self, termId):
+        metadataRecord = self.getBlockMaxIndexMetadata(termId)
+        blockSize = metadataRecord[1]
+        blockCount = metadataRecord[2]
+        docIdCount = metadataRecord[3]
+        offset = metadataRecord[4]
+        blocks = []
+        blockMaxIndexFile = open('blockMaxIndex.dat', 'rb')
+        recordFormat = f"Id{blockSize}I{blockSize}d"
+        recordSize = struct.calcsize(recordFormat)
+        recordUnpack = struct.Struct(recordFormat).unpack_from
+        for i in range(blockSize):
+            blockMaxIndexFile.seek(offset)
+            data = blockMaxIndexFile.read(recordSize)
+            record = recordUnpack(data)
+            offset += recordSize
+            block = Block(record, blockSize, blockCount, 1 + i, docIdCount)
+            blocks.append(block)
+        blockMaxIndexFile.close()
+
+        return blocks
+
 
 

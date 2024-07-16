@@ -48,3 +48,27 @@ class Block(object):
 
     def hasNextBlock(self):
         return self.blockCount > self.blockNumber
+
+    def getAllDocId(self):
+        docIdList = []
+        for i in range(self.blockSize):
+            docIdList.append(self.record[2 + i])
+        return docIdList
+
+    def getAllScores(self):
+        scoreList = []
+        for i in range(self.blockSize):
+            scoreList.append(self.record[2 + self.blockSize + i])
+        return scoreList
+
+    def getDeltaGaps(self):
+        dGaps = []
+        lastDocId = 0
+        for docId in self.getAllDocId():
+            if len(dGaps) == 0:
+                dGaps.append(docId)
+            else:
+                dGap = lastDocId - docId
+                dGaps.append(dGap)
+            lastDocId = docId
+        return dGaps

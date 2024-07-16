@@ -10,6 +10,8 @@ class BlockService(object):
         self.docIdSkipped = 0
         self.docIdSkippedWithUb = 0
         self.blockSkipped = 0
+        self.termList = []
+        self.sizes = []
         # Se instancia el objecto blockManager que está encargado de leer el archivo
         self.blockManager = BlockMaxIndexManager()
         # Se obtiene la metadata que contiene el par <id-término>:<string del término>
@@ -38,12 +40,14 @@ class BlockService(object):
         return tOpt, tEss
 
     def getFirstBlock(self, queryTerms):
-        termIdList = []
         for term in queryTerms:
             if term in self.TermsDict:
-                termIdList.append(int(self.TermsDict[term]))
+                self.termList.append(int(self.TermsDict[term]))
                 self.blocksRead += 1
-        return self.blockManager.getFirstBlocks(termIdList)
+        blocks = self.blockManager.getFirstBlocks(self.termList)
+        for block in blocks:
+            self.sizes.append(blocks[block].docIdCount)
+        return blocks
 
     def nextDocWithinEssentialBlock(self, tEss):
         minDocId = self.pivotDocId
@@ -86,7 +90,7 @@ class BlockService(object):
         return P
 
     def getCurrentDocId(self, t):
-        self.blocksRead += 1
+        self.docIdRead += 1
         return self.block[t].getCurrentDocId()
 
     def skipTo(self, t, pivotDocId):
@@ -98,10 +102,10 @@ class BlockService(object):
                 # Se saltean los DOC-ID hasta un DOC-ID que sea igual o mayor al pivote
                 self.docIdSkipped += self.block[t].skipTo(pivotDocId)
             else:
-                self.blocksRead += 1
                 self.block[t], founded, skipped = self.blockManager.getBlockByDocId(t, pivotDocId, self.block[t])
                 self.docIdSkipped += self.block[t].skipTo(pivotDocId)
                 self.blockSkipped += skipped
+                self.docIdSkipped += skipped * self.block[t].blockSize
                 # Si no encuentra el siguiente bloque, es porque el DOC-ID más grande del índice es menor que el
                 # DOC-ID pivote, por lo que el pivote no está en el índice
                 # Ni tampoco los siguientes DOC-ID pivotes. Por lo que ya no tendría sentido considerar el índice
@@ -109,6 +113,8 @@ class BlockService(object):
                 # Se registra en la lista processedTerms que ya se llegó al final del índice
                 if not founded:
                     self.processedTerms.append(t)
+                else:
+                    self.blocksRead += 1
 
     def getUb(self, t):
         return self.block[t].getUb()
@@ -122,3 +128,17 @@ class BlockService(object):
             order.append((term, self.block[term].docIdCount))
         order.sort(key=lambda s: s[1])
         return order
+
+    def getStatistics(self):
+        statistics = dict()
+        statistics["block_read"] = self.blocksRead
+        statistics["doc_id_read"] = self.docIdRead
+        statistics["doc_id_skipped"] = self.docIdSkipped
+        statistics["doc_id_skipped_with_ub"] = self.docIdSkippedWithUb
+        statistics["block_skipped"] = self.blockSkipped
+        statistics["posting_list_sizes"] = self.sizes
+        if len(self.sizes) > 0:
+            statistics["max_posting_size"] = max(self.sizes)
+        else:
+            statistics["max_posting_size"] = 0
+        return statistics
