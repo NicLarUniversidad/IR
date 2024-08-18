@@ -5,6 +5,27 @@ from nltk import SnowballStemmer
 from nltk import LancasterStemmer
 
 
+# REEMPLAZAR_CARACTERES = {
+#
+#    'a': ['ā', 'á', 'ǎ', 'à', 'â', 'ã', 'ä'],
+#    'e': ['é', 'ě', 'è', 'ê', 'ë'],
+#    'i': ['í', 'ǐ', 'ì', 'î', 'ï'],
+#    'o': ['ó', 'ǒ', 'ò', 'ô', 'ö'],
+#    'u': ['ú', 'ü','ǘ', 'ǚ', 'ǔ', 'ǜ', 'ù', 'û'],
+#    'n': ['ñ'],
+#    'ss': ['ß'],
+#    ' ':['¬', '…'],
+#    'c': ['ç']
+# }
+
+
+# PATRONES = {
+#    'mail': '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+#    'url': '(?:https:\/\/|http:\/\/)(?:www\.)?[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9]{2,}(?:\/[a-zA-Z0-9-._~:?#[@!$&'()*+,;=%]*)?',
+#    'telefono': '(\+?54)[ -]*[9][ -]*[0-9]{2,4}[ -]*[0-9]{2,4}[ -]*[0-9]{4,4}',
+#    'nombre': '[A-Z][a-z]+(?:(?:\s*|\s*\n\s*) [a-z]{1,3} [a-z]{1,3}? [A-Z][a-z]+)*'
+# }
+
 class Parser(object):
 
     def __init__(self):
@@ -14,6 +35,8 @@ class Parser(object):
         self.stemmerLancaster = LancasterStemmer()
         self.minLength = 3
         self.maxLength = 15
+#       self._reemplazar_caracteres = REEMPLAZAR_CARACTERES
+#       self._patrones = PATRONES
 
     def customParse(self, text, termIndexes=None, termIndexesInverse=None):
         if termIndexes is None:
