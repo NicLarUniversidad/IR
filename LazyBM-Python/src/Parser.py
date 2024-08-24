@@ -32,8 +32,8 @@ class Parser(object):
         self.stopwords = list(nltk.corpus.stopwords.words('spanish')) + list(nltk.corpus.stopwords.words('english'))
         self.stemmer = SnowballStemmer('spanish')
         self.stemmerLancaster = LancasterStemmer()
-        self.minLength = 3
-        self.maxLength = 15
+        self.minLength = 0
+        self.maxLength = 150
         self._reemplazar_caracteres = REEMPLAZAR_CARACTERES
         self._patrones = PATRONES
 
