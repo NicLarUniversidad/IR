@@ -37,6 +37,12 @@ class Parser(object):
         self._reemplazar_caracteres = REEMPLAZAR_CARACTERES
         self._patrones = PATRONES
 
+    def customParse1(self, term):
+        for k in self._reemplazar_caracteres:
+            for r in self._reemplazar_caracteres[k]:
+                term = term.replace(r, k)
+        return term
+
     def customParse(self, text, termIndexes=None, termIndexesInverse=None):
         if termIndexes is None:
             termIndexes = dict()
