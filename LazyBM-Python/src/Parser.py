@@ -43,11 +43,9 @@ class Parser(object):
                 term = term.replace(r, k)
         return term
 
-    def customParse(self, text, termIndexes=None, termIndexesInverse=None):
+    def customParse(self, text, termIndexes=None):
         if termIndexes is None:
             termIndexes = dict()
-        if termIndexesInverse is None:
-            termIndexesInverse = dict()
         termCount = len(termIndexes)
         text = text.lower()
         text = re.sub(r'[àáâãäå]', 'a', text)
@@ -67,7 +65,6 @@ class Parser(object):
                     if formattedWord not in termIndexes:
                         termCount += 1
                         termIndexes[formattedWord] = termCount
-                        termIndexesInverse[termCount] = formattedWord
                         termKey = termCount
                     else:
                         termKey = termIndexes[formattedWord]
@@ -76,7 +73,7 @@ class Parser(object):
                         textTerms[termKey] = 1
                     else:
                         textTerms[termKey] += 1
-        return textTerms, termIndexes, termIndexesInverse  # Se devuelve: ID Término -> Frecuencia
+        return textTerms, termIndexes  # Se devuelve: ID Término -> Frecuencia
 
     def customParseEnglishStemmer(self, text, termIndexes=None, termIndexesInverse=None):
         if termIndexes is None:
