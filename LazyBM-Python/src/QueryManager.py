@@ -9,7 +9,7 @@ class QueryManager(object):
     def __init__(self):
         nltk.download('stopwords')
         self.stopwords = list(stopwords.words('spanish')) + list(nltk.corpus.stopwords.words('english'))
-        self.stemmer = SnowballStemmer('spanish')
+        self.stemmer = SnowballStemmer('english')
 
 
     def parseBooleanQuery(self, query):

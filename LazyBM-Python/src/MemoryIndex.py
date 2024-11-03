@@ -1,4 +1,4 @@
-from VectorialPostingList import VectorialPostingList
+from PostingList import PostingList
 
 
 class MemoryIndex:
@@ -11,5 +11,5 @@ class MemoryIndex:
         if fileTermDict is not None:
             for term in fileTermDict:
                 if int(term) not in self.postingLists:
-                    self.postingLists[int(term)] = VectorialPostingList(term)
+                    self.postingLists[int(term)] = PostingList(term)
                 self.postingLists[int(term)].addDocId(fileId, fileTermDict[term])

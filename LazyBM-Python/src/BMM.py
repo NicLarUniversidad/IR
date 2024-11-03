@@ -53,7 +53,7 @@ class BMM(object):
                     score += blockService.getCurrentScore(t)
 
             if score > topK.getTheta():
-                topK.insert(pivotDocId, score)
+                topK.put(pivotDocId, score)
 
         finishTime = time.time()
         self.processTime = finishTime - initTime

@@ -75,7 +75,7 @@ class LazyBM(object):
                         score += blockService.getCurrentScore(t)
 
                 if score > topK.getTheta():
-                    topK.insert(pivotDocId, score)
+                    topK.put(pivotDocId, score)
 
             else:
                 blockService.docIdSkippedWithUb += 1

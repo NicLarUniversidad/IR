@@ -30,7 +30,7 @@ class Parser(object):
     def __init__(self):
         nltk.download('stopwords')
         self.stopwords = list(nltk.corpus.stopwords.words('spanish')) + list(nltk.corpus.stopwords.words('english'))
-        self.stemmer = SnowballStemmer('spanish')
+        self.stemmer = SnowballStemmer('english')
         self.stemmerLancaster = LancasterStemmer()
         self.minLength = 0
         self.maxLength = 150

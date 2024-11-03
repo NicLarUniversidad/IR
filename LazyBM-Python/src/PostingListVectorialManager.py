@@ -1,13 +1,13 @@
 import os
 import struct
 
-from VectorialPostingList import VectorialPostingList
+from PostingList import PostingList
 
 
 class PostingListVectorialManager(object):
 
     def getPostingListByTermId(self, termId):
-        postingList = VectorialPostingList(termId)
+        postingList = PostingList(termId)
         termMetadata = self.loadMetadata(termId)
         if termMetadata is not None:
             offset = termMetadata[1]

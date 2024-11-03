@@ -1,7 +1,7 @@
 import os
 import struct
 
-from termcolor import colored
+#from termcolor import colored
 
 from Block import Block
 
@@ -71,7 +71,7 @@ class BlockMaxIndexManager(object):
         metadataUnpack = struct.Struct(blockMaxMetadataRecordFormat).unpack_from
         offset = (termId - 1) * blockMaxMetadataRecordSize
         if offset > os.path.getsize('blockMaxIndexMetadata.dat') - blockMaxMetadataRecordSize:
-            print(colored(f'Se intentó acceder al byte {offset}, pero el archivo tiene{os.path.getsize("blockMaxIndexMetadata.dat")} bytes', 'red'))
+            #print(colored(f'Se intentó acceder al byte {offset}, pero el archivo tiene{os.path.getsize("blockMaxIndexMetadata.dat")} bytes', 'red'))
             # Si el offset es más grande que el archivo, entocnes se está buscando un ID que no existe en el índice
             return None
         else:

@@ -3,7 +3,7 @@ import os
 import struct
 import time
 
-from VectorialPostingList import VectorialPostingList
+from PostingList import PostingList
 from Bm25Calculator import Bm25Calculator
 
 
@@ -22,7 +22,7 @@ class BlockMaxIndexFactory(object):
         if termsFromFileDict is not None:
             for term in termsFromFileDict:
                 if int(term) not in self.postingLists:
-                    self.postingLists[int(term)] = VectorialPostingList(term)
+                    self.postingLists[int(term)] = PostingList(term)
                 self.postingLists[int(term)].addDocId(fileId, termsFromFileDict[term])
 
     def saveToDisk(self, vocabulary):
