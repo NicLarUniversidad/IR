@@ -2,7 +2,7 @@ from IndexFactory import IndexFactory
 from QueryFileReader import QueryFileReader
 from SearchManager import SearchManager
 
-indexFactory = IndexFactory("wiki-small")
+indexFactory = IndexFactory("files")
 
 indexFactory.buildMemoryIndex()
 # Remover comentario para ver cómo queda el índice
