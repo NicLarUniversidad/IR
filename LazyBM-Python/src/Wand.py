@@ -9,6 +9,7 @@ class Wand(object):
 
     def processQuery(self, lists, topk):
         scoringOps = 0
+        skipped = 0
         #
         theta = 0
         infinite = self.MaximumDocID(lists) + 1
@@ -46,11 +47,12 @@ class Wand(object):
             else:
                 while lists[pivot].getCurrentId2() == pivot_id:
                     pivot = pivot - 1
-                lists[pivot].nextge(pivot_id)
+                nextDocId, skipped0 = lists[pivot].nextge(pivot_id)
+                skipped += skipped0
                 lists, ulists = self.swapDown(lists, pivot)
             #
         #
-        return scoringOps, []
+        return scoringOps, skipped
 
     def sortListsByDocId(self, lists) -> List:
         lists.sort(key=lambda x: x.getCurrentId2())

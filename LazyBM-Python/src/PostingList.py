@@ -119,12 +119,14 @@ class PostingList(object):
 
     def nextge(self, _docid):
         current = self.getCurrentDocID()
+        skipped = 0
         hasNext = True
         while current <= _docid and hasNext:
             self.next()
+            skipped += 1
             hasNext = current != self.getCurrentDocID()
             current = self.getCurrentDocID()
-        return self.getCurrentDocID()
+        return self.getCurrentDocID(), skipped
 
     def hasNotNext(self):
         return self.index >= len(self.docIdList)

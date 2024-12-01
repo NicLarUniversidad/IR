@@ -9,6 +9,7 @@ class MaxScore(object):
 
     def processQuery(self, lists, topk):
         scoringOps = 0
+        skipped = 0
         #
         ub_lists = self.sortListsByUB(lists)
         # Acumulo los UB
@@ -28,7 +29,8 @@ class MaxScore(object):
             nextd = infinite
             #
             for i in range(pivot, n):
-                lists[i].nextge(current)
+                nextDocId, skipped0 = lists[i].nextge(current)
+                skipped += skipped0
                 if lists[i].getCurrentDocID() == current:
                     score = score + lists[i].getCurrentScore()
                     scoringOps += 1
@@ -39,7 +41,8 @@ class MaxScore(object):
             for i in range(pivot - 1, -1, -1):
                 if (score + ub[i]) <= theta:
                     break
-                lists[i].nextge(current)
+                nextDocId, skipped0 = lists[i].nextge(current)
+                skipped += skipped0
                 if lists[i].getCurrentDocID() == current:
                     score = score + lists[i].getCurrentScore()
                     scoringOps = scoringOps + 1
@@ -51,7 +54,7 @@ class MaxScore(object):
             #
             current = nextd
             #               
-        return scoringOps, []
+        return scoringOps, skipped
 
     def sortListsByDocId(lists: List) -> List:
         lists.sort(key=lambda x: x.getCurrentDocID())

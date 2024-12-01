@@ -39,7 +39,7 @@ class IndexFactory(object):
             #           - Pares (TermID, Frecuencia)
             #           - Diccionario actualizado con: Término -> TermID
             fileTermDict, indexManager.termIndex = parser.customParse(fileContent, indexManager.termIndex)
-
+            print(fileTermDict)
             # Se agregan los pares al índice
             self.memoryIndex.add(fileTermDict, fileId)
             fileId += 1

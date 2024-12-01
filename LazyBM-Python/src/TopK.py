@@ -16,6 +16,7 @@ class TopK(object):
             if len(self.rank) > self.k:
                 self.scores.remove(self.scores[self.k])
                 self.rank.remove(self.rank[self.k])
+            if len(self.rank) >= self.k:
                 self.theta = self.scores[self.k - 1]
             else:
                 self.theta = 0

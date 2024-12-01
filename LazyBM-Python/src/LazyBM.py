@@ -10,8 +10,9 @@ from TopK import TopK
 
 class LazyBM(object):
 
-    def __init__(self, termDict=None):
+    def __init__(self, blockMaxIndex, termDict=None):
         self.postingLists = dict()
+        self.blockMaxIndex = blockMaxIndex
         self.queryManager = QueryManager()
         self.infinite = -1
         self.termDict = termDict
@@ -19,10 +20,10 @@ class LazyBM(object):
         self.sizes = []
 
     # Se implementa el pseudo-código de LazyBM en el siguiente método
-    def processQuery(self, queryTerms, k):
+    def processQuery(self, queryTerms, topK):
         initTime = time.time()
         # La clase top K representa un heap de tamaño K
-        topK = TopK(k)
+        #topK = TopK(k) #  Ya se manda por parámetro
         # Al instanciar un blockService, se buscan los primeros bloques y hay un ordenamiento (ver constructor)
         # Get candidate doc id list
         blockService = BlockService(queryTerms, self.termDict)
