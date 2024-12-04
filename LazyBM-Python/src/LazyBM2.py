@@ -53,12 +53,13 @@ class LazyBM(object):
                     ub += blocks[termId].getUb()
 
             for termId in tOpt:
-                if ub > topK.getTheta() or ub + P[termId] < topK.getTheta():
-                    break
 
                 if blocks[termId].getCurrentDocId() < pivotDocId:
                     blocks[termId], docIdSkipped = self.getPosting(postingLists, termId).skipTo(blocks[termId], pivotDocId)
                     self.skippedDocId += docIdSkipped
+
+                if ub > topK.getTheta() or ub + P[termId] < topK.getTheta():
+                    continue
 
                 if blocks[termId].getCurrentDocId() == pivotDocId:
                     ub += blocks[termId].getUb()
@@ -71,8 +72,8 @@ class LazyBM(object):
 
                 for termId in tOpt:
 
-                    if score + blocks[termId].getUb() <= topK.getTheta():
-                        break
+                    # if score + blocks[termId].getUb() <= topK.getTheta():
+                    #     break
 
                     if blocks[termId].getCurrentDocId() < pivotDocId:
                         blocks[termId], docIdSkipped = self.getPosting(postingLists, termId).skipTo(blocks[termId], pivotDocId)
@@ -83,6 +84,8 @@ class LazyBM(object):
 
                 if score > topK.getTheta():
                     topK.put(pivotDocId, score)
+            else:
+                self.skippedDocId += 1
 
         #self.sizes = blockService.sizes
         return topK, self.skippedDocId  #, blockService
@@ -126,7 +129,7 @@ class LazyBM(object):
         upperBounds = dict()
         accumulatedUB = 0
         for termId in currentsIds:
-            accumulatedUB += blocks[termId].getUb()
+            accumulatedUB += blocks[termId].getUbScore()
             upperBounds[termId] = accumulatedUB
         return upperBounds
 

@@ -36,7 +36,7 @@ class MemoryBlockMaxPostingList(object):
         if pivotDocId <= block.docIdUpperbound:
             docIdSkipped = block.skipTo(pivotDocId)
         else:
-            docIdSkipped = 0
+            docIdSkipped = block.skipTo(block.docIdUpperbound)
             blockIdx = block.idx
             while pivotDocId > block.docIdUpperbound:
                 blockIdx += 1
@@ -45,6 +45,8 @@ class MemoryBlockMaxPostingList(object):
                     if nextBlock is None:
                         break
                     else:
+                        if block.getCurrentDocId() != -1:
+                            docIdSkipped += 1
                         block = nextBlock
                 docIdSkipped = block.skipTo(pivotDocId)
                 block = self.blocks[blockIdx]

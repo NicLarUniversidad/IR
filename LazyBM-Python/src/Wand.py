@@ -22,7 +22,8 @@ class Wand(object):
             cumub = 0
         # TODO: Revisar condición de corte y valor infinito en el pivote
             for pivot in range(0, n):
-                if lists[pivot].getCurrentId2() >= infinite or lists[pivot].getCurrentId2() == -1:
+                #if lists[pivot].getCurrentId2() >= infinite or lists[pivot].getCurrentId2() == -1:
+                if lists[pivot].getCurrentId2() == -1:
                     break
                 cumub = cumub + ulists[pivot]
                 if cumub > theta:
@@ -38,7 +39,7 @@ class Wand(object):
                     if lists[i].getCurrentId2() != pivot_id:
                         break
                     score = score + lists[i].getCurrentScore()
-                    lists[i].next()
+                    lists[i].next2()
                     scoringOps = scoringOps + 1
                 #
                 topk.put(pivot_id, score)

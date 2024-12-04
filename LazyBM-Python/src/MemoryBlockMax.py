@@ -18,18 +18,21 @@ class MemoryBlockMax(object):
         return self.getCurrentDocId()
 
     def getUb(self):
-        return self.docIdUpperbound
+        return self.frequencyUpperbound
+
+    def getUbScore(self):
+        return self.frequencyUpperbound
 
     def skipTo(self, pivotDocId):
         skipped = 0
         if pivotDocId <= self.docIdUpperbound:
-            while pivotDocId < self.getCurrentDocId():
+            while pivotDocId > self.getCurrentDocId() and self.getCurrentDocId() != -1:
                 self.next()
                 skipped += 1
-        else:
-            while self.getCurrentDocId() <= self.docIdUpperbound:
-                if self.next() != -1:
-                    skipped += 1
+        # else:
+        #     while self.getCurrentDocId() <= self.docIdUpperbound:
+        #         if self.next() != -1:
+        #             skipped += 1
         return skipped
 
     def getCurrentScore(self):

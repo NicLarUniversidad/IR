@@ -25,7 +25,7 @@ class SearchManager(object):
         # if algorithm is None or len(self.algorithms) == 0:
             #self.algorithms[TopkAlgorithms.LAZY_BM] = LazyBM(termDict)
         self.algorithms[TopkAlgorithms.MAX_SCORE] = MaxScore(termDict)
-        #self.algorithms[TopkAlgorithms.WAND] = Wand(termDict)
+        self.algorithms[TopkAlgorithms.WAND] = Wand(termDict)
         if blockMaxIndex is not None:
             self.algorithms[TopkAlgorithms.LAZY_BM] = LazyBM(blockMaxIndex)
         self.queryManager = QueryManager()
@@ -51,6 +51,7 @@ class SearchManager(object):
                     self.postingLists[termId].currentDocId = self.postingLists[termId].docIdList[0]
                     queryPostingsLists.append(self.postingLists[termId])
                     print(f"Posting term id: {termId}: {self.postingLists[termId].docIdList}")
+                    print(f"        Scores:: {self.postingLists[termId].scores}")
                 if self.blockMaxIndex is not None and termId in self.blockMaxIndex.postingLists:
                     self.blockMaxIndex.postingLists[termId].infinite = 0
                     self.blockMaxIndex.postingLists[termId].index = 0
@@ -58,6 +59,7 @@ class SearchManager(object):
                     print(f"Posting term id: {termId}: ")
                     for block in self.blockMaxIndex.postingLists[termId].blocks:
                         print(f"                            {block.docIdList}")
+                        print(f"                     Scores:{block.scores}")
             for algorithm in self.algorithms:
                 searcher = self.algorithms[algorithm]
                 topK = TopK(topKN)

@@ -42,6 +42,10 @@ class PostingList(object):
             self.currentDocId += 1
         return self.getCurrent()
 
+    def next2(self):
+        self.advanceIndex()
+        #return self.getCurrent()
+
     def loadDeltaGaps(self):
         self.dGaps = []
         lastDocId = 0
@@ -121,7 +125,7 @@ class PostingList(object):
         current = self.getCurrentDocID()
         skipped = 0
         hasNext = True
-        while current <= _docid and hasNext:
+        while current < _docid and hasNext:
             self.next()
             skipped += 1
             hasNext = current != self.getCurrentDocID()
@@ -132,4 +136,8 @@ class PostingList(object):
         return self.index >= len(self.docIdList)
 
     def getCurrentId2(self):
-        return self.docIdList[self.index] if (self.index <= len(self.docIdList)) else -1
+        if self.index < len(self.docIdList):
+            return self.docIdList[self.index]
+        else:
+            return -1
+        #return self.docIdList[self.index] if (self.index <= len(self.docIdList)) else -1
