@@ -52,6 +52,14 @@ class Wand(object):
                 skipped += skipped0
                 lists, ulists = self.swapDown(lists, pivot)
             #
+            for i in range(0, n):
+                if lists[i].getCurrentId2() < pivot_id:
+                    nextDocId, skipped0 = lists[i].nextge(pivot_id)
+                    skipped += skipped0
+        for i in range(0, n):
+            if lists[i].getCurrentId2() != -1:
+                nextDocId, skipped0 = lists[i].nextge(lists[i].getMaxDocID() + 1)
+                skipped += skipped0
         #
         return scoringOps, skipped
 

@@ -31,7 +31,6 @@ class Parser(object):
         nltk.download('stopwords')
         self.stopwords = list(nltk.corpus.stopwords.words('spanish')) + list(nltk.corpus.stopwords.words('english'))
         self.stemmer = SnowballStemmer('english')
-        self.stemmerLancaster = LancasterStemmer()
         self.minLength = 0
         self.maxLength = 150
         self._reemplazar_caracteres = REEMPLAZAR_CARACTERES
@@ -60,19 +59,19 @@ class Parser(object):
         for word in words:
             formattedWord = self.stemmer.stem(word)
             formattedWord = re.sub(r'\W', '', formattedWord)
-            if len(formattedWord) > self.minLength & len(formattedWord) < self.maxLength:
-                if formattedWord not in self.stopwords:
-                    if formattedWord not in termIndexes:
-                        termCount += 1
-                        termIndexes[formattedWord] = termCount
-                        termKey = termCount
-                    else:
-                        termKey = termIndexes[formattedWord]
-                    # Si ya está en la posting list, no se guarda de nuevo
-                    if termKey not in textTerms.keys():
-                        textTerms[termKey] = 1
-                    else:
-                        textTerms[termKey] += 1
+            #if len(formattedWord) > self.minLength & len(formattedWord) < self.maxLength:
+            if formattedWord not in self.stopwords:
+                if formattedWord not in termIndexes:
+                    termCount += 1
+                    termIndexes[formattedWord] = termCount
+                    termKey = termCount
+                else:
+                    termKey = termIndexes[formattedWord]
+                # Si ya está en la posting list, no se guarda de nuevo
+                if termKey not in textTerms.keys():
+                    textTerms[termKey] = 1
+                else:
+                    textTerms[termKey] += 1
         return textTerms, termIndexes  # Se devuelve: ID Término -> Frecuencia
 
     def customParseEnglishStemmer(self, text, termIndexes=None, termIndexesInverse=None):
@@ -90,7 +89,7 @@ class Parser(object):
         words = text.split()
         textTerms = dict()
         for word in words:
-            formattedWord = self.stemmerLancaster.stem(word)
+            formattedWord = self.stemmer.stem(word)
             formattedWord = re.sub(r'\W', '', formattedWord)
             if len(formattedWord) > self.minLength & len(formattedWord) < self.maxLength:
                 if formattedWord not in self.stopwords:

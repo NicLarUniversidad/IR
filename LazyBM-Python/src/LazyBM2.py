@@ -116,6 +116,8 @@ class LazyBM(object):
         for postingList in postingLists:
             termId = postingList.termId
             firstBlock = postingList.blocks[0]
+            for block in postingList.blocks:
+                block.currentDocId = 0
             blocks[termId] = firstBlock
         return blocks
 

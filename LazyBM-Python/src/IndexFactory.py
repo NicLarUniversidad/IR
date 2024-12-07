@@ -33,16 +33,19 @@ class IndexFactory(object):
         print("Parseando y construyendo índice invertido...")
         for file in files:
             # Recupero el contenido del archivo
-            fileContent = fileManager.readFile(file)
-            # Parseo, recupero los términos y armo los pares (DocID, TermID)
-            #       La función devuelve:
-            #           - Pares (TermID, Frecuencia)
-            #           - Diccionario actualizado con: Término -> TermID
-            fileTermDict, indexManager.termIndex = parser.customParse(fileContent, indexManager.termIndex)
-            print(fileTermDict)
-            # Se agregan los pares al índice
-            self.memoryIndex.add(fileTermDict, fileId)
-            fileId += 1
+            try:
+                fileContent = fileManager.readFile(file)
+                # Parseo, recupero los términos y armo los pares (DocID, TermID)
+                #       La función devuelve:
+                #           - Pares (TermID, Frecuencia)
+                #           - Diccionario actualizado con: Término -> TermID
+                fileTermDict, indexManager.termIndex = parser.customParse(fileContent, indexManager.termIndex)
+                #print(fileTermDict)
+                # Se agregan los pares al índice
+                self.memoryIndex.add(fileTermDict, fileId)
+                fileId += 1
+            except Exception as e:
+                print(e)
 
         self.termKeyDic = indexManager.termIndex
 
