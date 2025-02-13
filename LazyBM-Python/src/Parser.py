@@ -42,39 +42,7 @@ class Parser(object):
                 term = term.replace(r, k)
         return term
 
-    def customParse(self, text, termIndexes=None):
-        if termIndexes is None:
-            termIndexes = dict()
-        termCount = len(termIndexes)
-        text = text.lower()
-        text = re.sub(r'[àáâãäå]', 'a', text)
-        text = re.sub(r'[èéêë]', 'e', text)
-        text = re.sub(r'[ìíîï]', 'i', text)
-        text = re.sub(r'[òóôõö]', 'o', text)
-        text = re.sub(r'[ùúûü]', 'u', text)
-        #TODO: cambiar split por expresiónes regulares
-        #re.split(regex, text)
-        words = text.split()
-        textTerms = dict()
-        for word in words:
-            formattedWord = self.stemmer.stem(word)
-            formattedWord = re.sub(r'\W', '', formattedWord)
-            #if len(formattedWord) > self.minLength & len(formattedWord) < self.maxLength:
-            if formattedWord not in self.stopwords:
-                if formattedWord not in termIndexes:
-                    termCount += 1
-                    termIndexes[formattedWord] = termCount
-                    termKey = termCount
-                else:
-                    termKey = termIndexes[formattedWord]
-                # Si ya está en la posting list, no se guarda de nuevo
-                if termKey not in textTerms.keys():
-                    textTerms[termKey] = 1
-                else:
-                    textTerms[termKey] += 1
-        return textTerms, termIndexes  # Se devuelve: ID Término -> Frecuencia
-
-    def customParseEnglishStemmer(self, text, termIndexes=None, termIndexesInverse=None):
+    def customParse(self, text, termIndexes=None, termIndexesInverse=None):
         if termIndexes is None:
             termIndexes = dict()
         if termIndexesInverse is None:
@@ -106,4 +74,4 @@ class Parser(object):
                         textTerms[termKey] = 1
                     else:
                         textTerms[termKey] += 1
-        return textTerms  # Se devuelve: ID Término -> Frecuencia
+        return textTerms, termIndexes, termIndexesInverse  # Se devuelve: ID Término -> Frecuencia

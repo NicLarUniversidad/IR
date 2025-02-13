@@ -1,26 +1,20 @@
-from IndexFactory import IndexFactory
-from MemoryBlockMaxIndex import MemoryBlockMaxIndex
 from QueryFileReader import QueryFileReader
 from SearchManager import SearchManager
 
-top_k = 5
-folderName = "ms-marco/files"
-indexFactory = IndexFactory(folderName)
+top_k = 50
+folderName = "ms-marco"
 
-indexFactory.buildMemoryIndex()
-blockMaxIndex = MemoryBlockMaxIndex(indexFactory.memoryIndex)
 queries = QueryFileReader().queries
 
-termsDict = indexFactory.termKeyDic
-searchManager = SearchManager(termDict=termsDict, postingLists=indexFactory.memoryIndex.postingLists, blockMaxIndex=blockMaxIndex)
-print("Generando los rankings")
-f_ranking = open(f"ranking_{folderName}.txt", "w", encoding="utf-8")
-f_skipped = open(f"skipped_{folderName}.txt", "w", encoding="utf-8")
+print("Leyendo archivo de términos - termID")
+searchManager = SearchManager(onDisk=True)
+f_ranking = open(f"ranking_{folderName}_top_{top_k}.txt", "w", encoding="utf-8")
+f_skipped = open(f"skipped_{folderName}_top_{top_k}.txt", "w", encoding="utf-8")
 f_skipped.write("QueryId,Algorithm,DocIdSkipped\n")
-f_posting_length = open(f"posting_length_{folderName}.txt", "w", encoding="utf-8")
+f_posting_length = open(f"posting_length_{folderName}_top_{top_k}.txt", "w", encoding="utf-8")
 for queryIdx in queries:
     query = queries[queryIdx]
-    results = searchManager.search(query, top_k)
+    results = searchManager.search(query, top_k, queryIdx)
     for result in results:
         topK = results[result][0]
         skipped = results[result][1]

@@ -28,10 +28,13 @@ class PostingList(object):
         return docId, score
 
     def advanceIndex(self):
-        if len(self.docIdList) > self.index or len(self.dGaps) > self.index:
+        if (len(self.docIdList) > self.index or len(self.dGaps) > self.index) and self.index != -1:
             self.index += 1
         else:
             self.infinite = -1
+
+    def advanceIndex2(self):
+        self.index += 1
 
     def next(self):
         if self.index < len(self.docIdList) - 1:
@@ -45,6 +48,9 @@ class PostingList(object):
     def next2(self):
         self.advanceIndex()
         #return self.getCurrent()
+
+    def next3(self):
+        self.advanceIndex2()
 
     def loadDeltaGaps(self):
         self.dGaps = []
@@ -104,6 +110,12 @@ class PostingList(object):
     def getCurrentDocID(self):
         return self.docIdList[self.index]
 
+    def getCurrentDocID2(self):
+        if self.index < len(self.docIdList):
+            return self.docIdList[self.index]
+        else:
+            return -1
+
     def getCurrentScore(self):
         return self.scores[self.docIdList[self.index]]
 
@@ -127,12 +139,47 @@ class PostingList(object):
             skipped = 0
             hasNext = True
             while current < _docid and hasNext:
-                skipped += 1
                 self.next2()
                 try:
                     current = self.getCurrentDocID()
+                    skipped += 1
                 except:
                     self.index -= 1
+                    hasNext = False
+                #hasNext = current != self.getCurrentDocID()
+            return current, skipped
+        except:
+            return -1, 0
+
+    def nextge2(self, _docid):
+        try:
+            current = self.getCurrentDocID()
+            skipped = 0
+            hasNext = True
+            while current < _docid and hasNext:
+                self.next2()
+                try:
+                    current = self.getCurrentDocID()
+                    skipped += 1
+                except:
+                    #self.index -= 1
+                    hasNext = False
+                #hasNext = current != self.getCurrentDocID()
+            return current, skipped
+        except:
+            return -1, 0
+
+    def nextge3(self, _docid):
+        try:
+            current = self.getCurrentDocID()
+            skipped = 0
+            hasNext = True
+            while current < _docid and hasNext:
+                self.index += 1
+                if self.index < len(self.docIdList) and self.index != -1:
+                    current = self.getCurrentDocID()
+                    skipped += 1
+                else:
                     hasNext = False
                 #hasNext = current != self.getCurrentDocID()
             return current, skipped
@@ -143,7 +190,7 @@ class PostingList(object):
         return self.index >= len(self.docIdList)
 
     def getCurrentId2(self):
-        if self.index < len(self.docIdList):
+        if self.index < len(self.docIdList) and self.index >= 0:
             return self.docIdList[self.index]
         else:
             return -1

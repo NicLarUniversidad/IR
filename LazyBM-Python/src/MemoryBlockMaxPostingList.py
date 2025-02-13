@@ -11,6 +11,7 @@ class MemoryBlockMaxPostingList(object):
         self.blockSize = int(math.sqrt(len(postingList.docIdList)))
         docIdList = []
         scoreList = []
+        self.maxDocId = max(postingList.docIdList)
         self.count = 0
         for i in range(len(postingList.docIdList)):
             if len(docIdList) >= self.blockSize:

@@ -23,10 +23,10 @@ class PostingListVectorialManager(object):
             i = 1
             for k in range(0, postingListSize):
                 docIdList.append(record[i + k])
-            frequencies = []
+            frequencies = dict()
             i += postingListSize
             for k in range(0, postingListSize):
-                frequencies.append(record[i + k])
+                frequencies[docIdList[k]] = record[i + k]
             postingListFile.close()
             postingList.docIdList = docIdList
             postingList.scores = frequencies

@@ -87,6 +87,12 @@ class LazyBM(object):
             else:
                 self.skippedDocId += 1
 
+        # #Cuento los restantes de los términos no esenciales
+        tOpt, tEss = self.getOptionalsAndEssentials(P, topK.getTheta())
+        for termId in tOpt:
+            pl = self.getPosting(postingLists, termId)
+            block, skipped = pl.skipTo(blocks[termId], pl.maxDocId + 1)
+            self.skippedDocId += skipped
         #self.sizes = blockService.sizes
         return topK, self.skippedDocId  #, blockService
 
