@@ -1,3 +1,5 @@
+import time
+
 from LazyBM2 import LazyBM
 from MaxScore import MaxScore
 from MemoryBlockMaxIndex import MemoryBlockMaxIndex
@@ -43,7 +45,7 @@ class SearchManager(object):
             self.termDict = metadataManager.getTermsMetadata()
             self.blockMaxIndex = MemoryBlockMaxIndex()
 
-    def search(self, query, topKN, queryId = None):
+    def search(self, query, topKN, queryId = None, countSkipped = True):
         queryTerms = self.queryManager.parseQuery(query)
         queryTermIds = []
         for term in queryTerms:
@@ -99,17 +101,22 @@ class SearchManager(object):
                         if termId in self.postingLists and self.postingLists[termId] is not None:
                             self.postingLists[termId].index = 0
                             self.postingLists[termId].infinite = 0
-
-                    if algorithm != TopkAlgorithms.LAZY_BM:
-                        ranking, skipped = searcher.processQuery(queryPostingsLists, topK)
+                    initTime =  time.time()
+                    if countSkipped:
+                        if algorithm != TopkAlgorithms.LAZY_BM:
+                            ranking, skipped = searcher.processQuery(queryPostingsLists, topK)
+                        else:
+                            ranking, skipped = searcher.processQuery(queryBlocks, topK)
                     else:
-                        ranking, skipped = searcher.processQuery(queryBlocks, topK)
-                    # print("Resultado")
-                    # for i in range(0, len(topK.rank)):
-                    #     print(f" DocID: {topK.rank[i]}, Score: {topK.scores[i]}")
-                    # print(f"Se salteraron {skipped} doc ID")
-                    results[algorithm] = (topK, skipped, postingLen)
+                        skipped = 0
+                        if algorithm != TopkAlgorithms.LAZY_BM:
+                            searcher.noCountProcessQuery(queryPostingsLists, topK)
+                        else:
+                            searcher.noCountProcessQuery(queryBlocks, topK)
+                    finishTime = time.time()
+
+                    results[algorithm] = (topK, skipped, postingLen, finishTime - initTime)
             else:
                 for algorithm in self.algorithms:
-                    results[algorithm] = (TopK(topKN), 0, [])
+                    results[algorithm] = (TopK(topKN), 0, [], 0)
         return results

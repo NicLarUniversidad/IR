@@ -53,6 +53,25 @@ class MemoryBlockMaxPostingList(object):
                 block = self.blocks[blockIdx]
         return block, docIdSkipped
 
+    def noCountSkipTo(self, block, pivotDocId):
+        if pivotDocId <= block.docIdUpperbound:
+            block.noCountSkipTo(pivotDocId)
+        else:
+            block.noCountSkipTo(block.docIdUpperbound)
+            blockIdx = block.idx
+            while pivotDocId > block.docIdUpperbound:
+                blockIdx += 1
+                if blockIdx >= len(block.docIdList):
+                    nextBlock = self.getNextBlock(blockIdx)
+                    if nextBlock is None:
+                        break
+                    else:
+                        block = nextBlock
+                block.noCountSkipTo(pivotDocId)
+                block = self.blocks[blockIdx]
+        return block
+
+
     def getNextBlock(self, idx):
         if idx < len(self.blocks):
             return self.blocks[idx]

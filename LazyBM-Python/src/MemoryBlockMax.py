@@ -35,6 +35,11 @@ class MemoryBlockMax(object):
         #             skipped += 1
         return skipped
 
+    def noCountSkipTo(self, pivotDocId):
+        if pivotDocId <= self.docIdUpperbound:
+            while pivotDocId > self.getCurrentDocId() and self.getCurrentDocId() != -1:
+                self.next()
+
     def getCurrentScore(self):
         if self.currentDocId < len(self.docIdList):
             return self.scores[self.currentDocId]

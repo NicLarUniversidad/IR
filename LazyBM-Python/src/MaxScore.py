@@ -2,6 +2,8 @@ import math
 import sys
 from typing import List
 
+from TopK import TopK
+
 
 class MaxScore(object):
 
@@ -52,12 +54,12 @@ class MaxScore(object):
                             # Se suma el score/frecuencia
                             score += pl.getCurrentScore()
                             # Cuando se obtuvo el score, avanzo al siguiente doc ID
-                            pl.next2()
+                            pl.next3()
 
                 # Se intenta colocar el doc ID si tiene un score mayor a 0
-                if score > 0:
+                if score > 0 and score > theta:
                     # Se va a entrar al siguiente if si el score es mayor a theta
-                    if topk.put(current, score):
+                    if topk.put(currentDocId, score):
                         theta = topk.getMinScore()
 
                 # Se actualizan posting lists esenciales (acumUb > theta)
@@ -182,3 +184,63 @@ class MaxScore(object):
             if ub[i] > theta:
                 essentialPostingList00.append(lists[ub_lists[i][1]])
         return essentialPostingList00
+
+    def noCountProcessQuery(self, lists, topk0):
+        topk = TopK(topk0.k)
+        ub_lists = self.sortListsByUB(lists)  #  Lista con tuplas de: UB | ÍNDICE DE lists. Ordenada por UB
+        # Acumulo los UB
+        n = len(ub_lists)
+        ub = [0] * n
+        ub[0] = ub_lists[0][0] # Primer índice UB más chico, segundo índice: 0 valor UB, 1 índice
+        for i in range(1, len(ub_lists)):
+            ub[i] = ub[i - 1] + ub_lists[i][0]
+        #   
+        theta = 0
+        current = self.MinimumDocID(lists)
+        infinite = self.MaximumDocID(lists) + 1
+        hasNextDocIdInEssentialPostingList = True
+        # Guardo listas esenciales (ub por arriba de theta)
+        essentialPostingList = []
+        for l in ub_lists:
+            essentialPostingList.append(lists[l[1]])
+
+        while hasNextDocIdInEssentialPostingList:  # (pivot < n and current < infinite):
+            score = 0
+            currentDocId = self.getMinimunDocId(essentialPostingList, infinite)
+            # Si todas las PL esenciales llegaron al final, termina el procesamiento
+            if currentDocId == infinite:
+                hasNextDocIdInEssentialPostingList = False
+            else:
+                # Salteo los doc ID de todas las posting list hasta el doc ID actual
+                for i in range(len(ub_lists)):
+                    pl = lists[ub_lists[i][1]]
+                    pl.noCountNextge3(current)
+                    # Cuento los salteados
+                    #skipped += skipped0
+
+                # Calculo el score del doc ID actual con la frecuencia de todas las listas
+                for i in range(len(ub_lists)):
+                    pl = lists[ub_lists[i][1]]
+                    currentDocInList0 = pl.getCurrentDocID2()
+                    # Si llegó al final va a devolver -1
+                    if currentDocInList0 != -1:
+                        # Si en la posting list está el doc ID actual
+                        if currentDocInList0 == currentDocId:
+                            # Se suma el score/frecuencia
+                            score += pl.getCurrentScore()
+                            # Cuando se obtuvo el score, avanzo al siguiente doc ID
+                            pl.next2()
+
+                # Se intenta colocar el doc ID si tiene un score mayor a 0
+                if score > 0 and score > theta:
+                    topk.put(current, score)
+                    theta = topk.getMinScore()
+
+                # Se actualizan posting lists esenciales (acumUb > theta)
+                essentialPostingList = self.updateEssentialPostingLists(theta, ub_lists, ub, lists)
+
+                # Si no hay más listas esenciales se termina el procesamiento
+                if len(essentialPostingList) == 0:
+                    hasNextDocIdInEssentialPostingList = False
+                
+        return topk #, skipped

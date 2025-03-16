@@ -46,15 +46,16 @@ class Wand(object):
             if pivot_id == lists[0].getCurrentId2():
                 score = 0
                 for i in range(0, n):
-                    if lists[i].getCurrentId2() != pivot_id:
-                        break
-                    score = score + lists[i].getCurrentScore()
-                    lists[i].next3()
-                    scoringOps = scoringOps + 1
+                    if lists[i].getCurrentId2() == pivot_id:
+                        #break
+                        score = score + lists[i].getCurrentScore()
+                        lists[i].next3()
+                        scoringOps = scoringOps + 1
                 #
-                topk.put(pivot_id, score)
-                theta = topk.getTheta()
-                lists = self.sortListsByDocId(lists)
+                if score > theta:
+                    topk.put(pivot_id, score)
+                    theta = topk.getTheta()
+                    #lists = self.sortListsByDocId(lists)
             else:
                 for i in range(0, pivote):
                     if lists[i].getCurrentId2() < pivot_id:
@@ -65,7 +66,7 @@ class Wand(object):
                 # nextDocId, skipped0 = lists[pivot].nextge3(pivot_id)
                 # skipped += skipped0
                 #lists, ulists = self.swapDown(lists, pivot)
-                lists = self.sortListsByDocId(lists)
+            lists = self.sortListsByDocId(lists)
             #
 
         for i in range(0, n):
@@ -200,3 +201,66 @@ class Wand(object):
         for i in range(0, len(lists)):
             ublists.append(lists[i].getUB())
         return (ublists)
+
+    def noCountProcessQuery(self, lists, topk):
+        theta = 0
+        lists = self.swapListsByDocId(lists)
+        ulists = self.makeUBList(lists)
+        upperBoundList = dict()
+        for l in lists:
+            upperBoundList[l.termId] = l.getUB()
+        n = len(lists)
+        #
+        while True:
+            pivot = 0
+            cumub = 0
+            pivote = -1
+        # TODO: Revisar condición de corte y valor infinito en el pivote
+            for a in range(0, n):
+                pivote += 1
+                #if lists[pivot].getCurrentId2() >= infinite or lists[pivot].getCurrentId2() == -1:
+                if lists[pivote].getCurrentId2() == -1:
+                    pivote -= 1
+                    break
+                #cumub = cumub + ulists[pivot]
+                cumub += upperBoundList[lists[pivote].termId]
+                if cumub > theta:
+                    break
+            # if cumub == 0:
+            #     break
+            if pivote == -1:
+                break
+            if cumub <= theta:
+                break
+
+            pivot_id = lists[pivot].getCurrentId2()
+            if pivot_id == lists[0].getCurrentId2():
+                score = 0
+                for i in range(0, n):
+                    if lists[i].getCurrentId2() != pivot_id:
+                        break
+                    score = score + lists[i].getCurrentScore()
+                    lists[i].next3()
+                #
+                topk.put(pivot_id, score)
+                theta = topk.getTheta()
+                lists = self.sortListsByDocId(lists)
+            else:
+                for i in range(0, pivote):
+                    if lists[i].getCurrentId2() < pivot_id:
+                        lists[i].noCountNextge3(pivot_id)
+                        # skipped += skipped0
+                # while lists[pivot].getCurrentId2() == pivot_id:
+                #     pivot = pivot - 1
+                # nextDocId, skipped0 = lists[pivot].nextge3(pivot_id)
+                # skipped += skipped0
+                # lists, ulists = self.swapDown(lists, pivot)
+                lists = self.sortListsByDocId(lists)
+            #
+
+        # for i in range(0, n):
+        #     if lists[i].getCurrentId2() != -1:
+        #         nextDocId, skipped0 = lists[i].nextge3(infinite)
+        #         skipped += skipped0
+        #
+        return topk #, skipped

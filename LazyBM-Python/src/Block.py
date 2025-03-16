@@ -46,6 +46,14 @@ class Block(object):
                 pass
         return skippedDocIds
 
+    def noCountSkipTo(self, pivoteDocId):
+        hasNextDocId = 1
+        while self.getMaxDocId() < pivoteDocId and hasNextDocId:
+            hasNextDocId = self.next()
+            if not hasNextDocId:
+                # TODO: ¿recuperar siguiente bloque?
+                pass
+
     def hasNextBlock(self):
         return self.blockCount > self.blockNumber
 

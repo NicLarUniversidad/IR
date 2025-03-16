@@ -186,6 +186,23 @@ class PostingList(object):
         except:
             return -1, 0
 
+    def noCountNextge3(self, _docid):
+        try:
+            current = self.getCurrentDocID()
+            skipped = 0
+            hasNext = True
+            while current < _docid and hasNext:
+                self.index += 1
+                if self.index < len(self.docIdList) and self.index != -1:
+                    current = self.getCurrentDocID()
+                    skipped += 1
+                else:
+                    hasNext = False
+                #hasNext = current != self.getCurrentDocID()
+            return current, skipped
+        except:
+            return -1, 0
+
     def hasNotNext(self):
         return self.index >= len(self.docIdList)
 

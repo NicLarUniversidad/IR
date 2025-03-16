@@ -1,12 +1,5 @@
-import time
-
-from BlockMaxIndexManager import BlockMaxIndexManager
-from BlockService import BlockService
-from MetadataFilesManager import MetadataFilesManager
-from PostingListVectorialManager import PostingListVectorialManager
 from QueryManager import QueryManager
 from TopK import TopK
-
 
 class LazyBM(object):
 
@@ -36,7 +29,7 @@ class LazyBM(object):
         tOpt, tEss = self.getOptionalsAndEssentials(P, topK.getTheta())
         self.pivotDocId = 0
         # Mientras haya un siguiente DOC-ID válido en el conjunto de bloques...
-        while self.nextDocWithinEssentialBlock(tEss, blocks, postingLists):
+        while self.nextDocWithinEssentialBlock(P, blocks, postingLists):
             # Compute prefix sum
             pivotDocId = self.pivotDocId
             # Se obtiene P(t|c)
@@ -58,8 +51,8 @@ class LazyBM(object):
                     blocks[termId], docIdSkipped = self.getPosting(postingLists, termId).skipTo(blocks[termId], pivotDocId)
                     self.skippedDocId += docIdSkipped
 
-                if ub > topK.getTheta() or ub + P[termId] < topK.getTheta():
-                    continue
+                # if ub > topK.getTheta(): or ub + P[termId] < topK.getTheta():
+                #     continue
 
                 if blocks[termId].getCurrentDocId() == pivotDocId:
                     ub += blocks[termId].getUb()
@@ -86,6 +79,11 @@ class LazyBM(object):
                     topK.put(pivotDocId, score)
             else:
                 self.skippedDocId += 1
+
+            # Next doc id
+            # for termId in P:
+            #     if blocks[termId].getCurrentDocId() == pivotDocId:
+            #         self.getPosting(postingLists, termId).next(blocks[termId])
 
         # #Cuento los restantes de los términos no esenciales
         tOpt, tEss = self.getOptionalsAndEssentials(P, topK.getTheta())
@@ -151,21 +149,32 @@ class LazyBM(object):
         return termOpt, termEss
 
     def nextDocWithinEssentialBlock(self, tEss, blocks, postingLists):
-        minDocId = None
+        minDocId = None#419180  161345
         found = False
         # Busco el mínimo DocId de los términos esenciales
         for termId in tEss:
             currentDocId = blocks[termId].getCurrentDocId()
             if currentDocId == self.pivotDocId:
-                #currentDocId = blocks[termId].next()
-                currentDocId = self.getPosting(postingLists, termId).next(blocks[termId])
+                currentDocId = blocks[termId].next()
+                #currentDocId = self.getPosting(postingLists, termId).next(blocks[termId])
             if minDocId is None or currentDocId < minDocId:
                 if currentDocId == -1:
+                    #currentDocId = self.getPosting(postingLists, termId).next(blocks[termId])
                     postingList = self.getPosting(postingLists, termId)
                     nextBlock = postingList.getNextBlock(blocks[termId].idx + 1)
                     if nextBlock:
+                        nextBlock.currentDocId = 0
                         blocks[termId] = nextBlock
                         currentDocId = blocks[termId].getCurrentDocId()
+                if currentDocId == self.pivotDocId:
+                    currentDocId = blocks[termId].next()
+                    if currentDocId == -1:
+                        postingList = self.getPosting(postingLists, termId)
+                        nextBlock = postingList.getNextBlock(blocks[termId].idx + 1)
+                        if nextBlock:
+                            nextBlock.currentDocId = 0
+                            blocks[termId] = nextBlock
+                            currentDocId = blocks[termId].getCurrentDocId()
                 if currentDocId != -1:
                     minDocId = currentDocId
                     found = True
@@ -178,3 +187,79 @@ class LazyBM(object):
             if pl.termId == termId:
                 postingList = pl
         return postingList
+# Se implementa el pseudo-código de LazyBM en el siguiente método
+    def noCountProcessQuery(self, postingLists, topk0):
+        topK = TopK(topk0.k)
+        # Inicializo contador de DocId salteados
+        #self.skippedDocId = 0
+        # La clase top K representa un heap de tamaño K
+        # topK = TopK(k) #  Ya se manda por parámetro
+        # Al instanciar un blockService, se buscan los primeros bloques y hay un ordenamiento (ver constructor)
+        # Get candidate doc id list
+        blocks = self.getFirstBlocks(postingLists)
+        # Se obtienen los upper bounds acomulados según el orden calculado
+        P = self.computePrefixSum(blocks)
+        # Se separan en términos esenciales y opcionales según theta
+        tOpt, tEss = self.getOptionalsAndEssentials(P, topK.getTheta())
+        self.pivotDocId = 0
+        # Mientras haya un siguiente DOC-ID válido en el conjunto de bloques...
+        while self.nextDocWithinEssentialBlock(tEss, blocks, postingLists):
+            # Compute prefix sum
+            pivotDocId = self.pivotDocId
+            # Se obtiene P(t|c)
+            ub = self.s(pivotDocId)
+            # Se obtienen los upper bounds acomulados según el orden calculado
+            P = self.computePrefixSum(blocks)
+            # Se separan en términos esenciales y opcionales según theta (MaxScore)
+            # T.opt <- P[t] < theta
+            # T.ess <- Q - T.opt
+            tOpt, tEss = self.getOptionalsAndEssentials(P, topK.getTheta())
+            # Se calcula un UB según los máximos scores de los bloques (WAND)
+            for termId in tEss:
+                if blocks[termId].getCurrentDocId() == pivotDocId:
+                    ub += blocks[termId].getUb()
+
+            for termId in tOpt:
+
+                if blocks[termId].getCurrentDocId() < pivotDocId:
+                    blocks[termId] = self.getPosting(postingLists, termId).noCountSkipTo(blocks[termId], pivotDocId)
+                    #self.skippedDocId += docIdSkipped
+
+                if ub > topK.getTheta() or ub + P[termId] < topK.getTheta():
+                    continue
+
+                if blocks[termId].getCurrentDocId() == pivotDocId:
+                    ub += blocks[termId].getUb()
+
+            if ub > topK.getTheta():
+                score = self.s(pivotDocId)
+                for termId in tEss:
+                    if blocks[termId].getCurrentDocId() == pivotDocId:
+                        score += blocks[termId].getCurrentScore()
+
+                for termId in tOpt:
+
+                    # if score + blocks[termId].getUb() <= topK.getTheta():
+                    #     break
+
+                    if blocks[termId].getCurrentDocId() < pivotDocId:
+                        blocks[termId] = self.getPosting(postingLists, termId).noCountSkipTo(blocks[termId], pivotDocId)
+                        #self.skippedDocId += docIdSkipped
+
+                    if blocks[termId].getCurrentDocId() == pivotDocId:
+                        score += blocks[termId].getCurrentScore()
+
+                if score > topK.getTheta():
+                    topK.put(pivotDocId, score)
+            # else:
+            #     self.skippedDocId += 1
+
+        # #Cuento los restantes de los términos no esenciales
+        # tOpt, tEss = self.getOptionalsAndEssentials(P, topK.getTheta())
+        # for termId in tOpt:
+        #     pl = self.getPosting(postingLists, termId)
+        #     block, skipped = pl.skipTo(blocks[termId], pl.maxDocId + 1)
+            #self.skippedDocId += skipped
+        #self.sizes = blockService.sizes
+        return topK #, self.skippedDocId  #, blockService
+    
